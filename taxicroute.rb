@@ -35,33 +35,50 @@ end
 inCity = 0
 outCity = 0
 totalOutMileage = Float(0)
+totalInMileage = Float(0)
 
 File.readlines(ARGV[0]).each do |line|
 
 	tripInfo = line.split ','
-
+	fail = false
 	sAddr = tripInfo[4]+" "+tripInfo[5]+" "+tripInfo[6].strip
-	sAddrGeo = Address.new sAddr
-	dAddr = tripInfo[7]+" "+tripInfo[8]+" "+tripInfo[9].strip
-	dAddrGeo = Address.new dAddr
-	sAddrState = sAddrGeo.municipality? ? "In-City" : "Out-City"
-	dAddrState = dAddrGeo.municipality? ? "In-City" : "Out-City"
-	output = sAddr+" (#{sAddrState}) <-> "+dAddr+" (#{dAddrState})"
-	if(sAddrState == "In-City" and dAddrState == "In-City")
-		trip = :in
-	else
-		trip = :out
+	begin
+		sAddrGeo = Address.new sAddr
+	rescue
+		fail = true
 	end
+	dAddr = tripInfo[7]+" "+tripInfo[8]+" "+tripInfo[9].strip
+	begin
+		dAddrGeo = Address.new dAddr
+	rescue
+		fail = true
+	end
+	if(!fail)
+		sAddrState = sAddrGeo.municipality? ? "In-City" : "Out-City"
+		dAddrState = dAddrGeo.municipality? ? "In-City" : "Out-City"
+		output = tripInfo[0]+": (#{tripInfo[1]}, #{tripInfo[2]})\t"+sAddr+" (#{sAddrState}) <-> "+dAddr+" (#{dAddrState})"
+		if(sAddrState == "In-City" and dAddrState == "In-City")
+			trip = :in
+		else
+			trip = :out
+		end
 
-	if(trip == :in)
-		puts output.green
-		inCity += 1
+		if(trip == :in)
+			tripMetric = Trip.new(sAddrGeo,dAddrGeo)
+			print output.green
+			puts ("\t["+tripMetric.mileage+"]").blue
+			totalInMileage += Float(tripMetric.mileage)
+			inCity += 1
+		else
+			tripMetric = Trip.new(sAddrGeo,dAddrGeo)
+			print output.red
+			puts ("\t["+tripMetric.mileage+"]").blue
+			totalOutMileage += Float(tripMetric.mileage)
+			outCity += 1
+		end
 	else
-		tripMetric = Trip.new(sAddrGeo,dAddrGeo)
-		print output.red
-		puts ("["+tripMetric.mileage+"]").blue
-		totalOutMileage += Float(tripMetric.mileage)
-		outCity += 1
+		output = tripInfo[0]+": (#{tripInfo[1]}, #{tripInfo[2]})\t"+sAddr+" <-> "+dAddr+" #FAILED TO GEOCODE"
+		puts output.yellow
 	end
 
 
@@ -69,4 +86,5 @@ end
 
 puts "         Inner-City Trips: #{inCity}"
 puts "        Out-of-City Trips: #{outCity}"
+puts " Total inner-city Mileage: #{totalInMileage}"
 puts "Total out-of-city Mileage: #{totalOutMileage}"

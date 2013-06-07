@@ -2,6 +2,7 @@
 
 require "./config.rb"
 require "json"
+require "colorize"
 
 class Address
 	NotImplemented = Class.new(StandardError)
