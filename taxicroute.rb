@@ -4,13 +4,14 @@
 # Licensed under the MIT license. See LICENSE for full license text
 # Copyright 2013
 
+require "open-uri"
+require "rubygems"
+require "colorize"
+
 require "./config.rb"
 require "./address.rb"
 require "./trip.rb"
 
-require "open-uri"
-require "rubygems"
-require "colorize"
 
 Appdata.config do
   parameter :muni
@@ -20,6 +21,7 @@ Appdata.config do
   parameter :gosmore_options
   parameter :debug
   parameter :round
+  parameter :costPerMile
 end
 
 Appdata.config do
@@ -29,7 +31,8 @@ Appdata.config do
 	gosmore_endpoint 'http://www.yournavigation.org/api/1.0/gosmore.php'
 	gosmore_options '?geometry=0&v=motorcar&fast=1&format=geojson&layer=mapnik'
 	debug 'false'
-	round 2
+	round 0
+	costPerMile 2.5
 end
 
 inCity = 0
@@ -72,7 +75,8 @@ File.readlines(ARGV[0]).each do |line|
 		else
 			tripMetric = Trip.new(sAddrGeo,dAddrGeo)
 			print output.red
-			puts ("\t["+tripMetric.mileage+"]").blue
+			print ("\t["+tripMetric.mileage+"]").blue
+			puts ("\t{"+String(Float(tripMetric.mileage) * Appdata.costPerMile)+"}").yellow
 			totalOutMileage += Float(tripMetric.mileage)
 			outCity += 1
 		end
