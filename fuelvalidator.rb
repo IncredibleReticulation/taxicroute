@@ -71,6 +71,10 @@ fillups.each { |fillup|
 	if(! checkFuel(fillup['Product']))
 		puts "\tProduct was #{fillup['Product Description']} (#{fillup['Product']}), which is not an authorized fuel type.".red
 	end
+	#check if they payed outside
+	if(fillup["Transaction Description"]=="IP")
+		puts "\tProduct was paid for inside.".red
+	end
 	#check station distance to rochester
 	fail = false
 	begin
