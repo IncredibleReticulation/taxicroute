@@ -22,6 +22,7 @@ Appdata.config do
   parameter :debug
   parameter :round
   parameter :costPerMile
+  parameter :outputFile
 end
 
 Appdata.config do
@@ -33,13 +34,16 @@ Appdata.config do
 	debug 'false'
 	round 0
 	costPerMile 2.5
+	outputFile true
 end
 
 inCity = 0
 outCity = 0
 totalOutMileage = Float(0)
 totalInMileage = Float(0)
-
+if(Appdata.outputFile)
+	foutput = File.new("processed_#{ARGV[0]}",'w')
+end
 File.readlines(ARGV[0]).each do |line|
 
 	tripInfo = line.split ','
@@ -72,6 +76,9 @@ File.readlines(ARGV[0]).each do |line|
 			puts ("\t["+tripMetric.mileage+"]").blue
 			totalInMileage += Float(tripMetric.mileage)
 			inCity += 1
+			if(Appdata.outputFile)
+				foutput.write("#{line.strip!},#{tripMetric.mileage},IN,FLAT\n")
+			end
 		else
 			tripMetric = Trip.new(sAddrGeo,dAddrGeo)
 			print output.red
@@ -79,15 +86,24 @@ File.readlines(ARGV[0]).each do |line|
 			puts ("\t{"+String(Float(tripMetric.mileage) * Appdata.costPerMile)+"}").yellow
 			totalOutMileage += Float(tripMetric.mileage)
 			outCity += 1
+			if(Appdata.outputFile)
+				foutput.write("#{line.strip!},#{tripMetric.mileage},OUT,#{Float(tripMetric.mileage) * Appdata.costPerMile}\n")
+			end
+
 		end
 	else
 		output = tripInfo[0]+": (#{tripInfo[1]}, #{tripInfo[2]})\t"+sAddr+" <-> "+dAddr+" #FAILED TO GEOCODE"
 		puts output.yellow
+		if(Appdata.outputFile)
+			foutput.write(line.strip!+",failed,failed,failed\n")
+		end
 	end
 
 
 end
-
+if(Appdata.outputFile)
+	foutput.close
+end
 puts "         Inner-City Trips: #{inCity}"
 puts "        Out-of-City Trips: #{outCity}"
 puts " Total inner-city Mileage: #{totalInMileage}"
